@@ -1,0 +1,129 @@
+---
+title: 'Reproducible Research: Assignment 1'
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+
+1. Load the data (i.e. 𝚛𝚎𝚊𝚍.𝚌𝚜𝚟())
+
+```{r, include=TRUE, echo = TRUE}
+filepath <- "~/Desktop/activity.csv"
+
+library(readr)
+
+#read data frame
+activity <- read_csv(filepath, 
+    col_types = cols(steps = col_integer()))
+
+```
+
+2. Process/transform the data (if necessary) into a format suitable for your analysis
+
+```{r, include=TRUE, echo = TRUE}
+#convert column with dates into R native date format
+activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
+#create a weekday variable
+activity$weekday <- weekdays(activity$date)
+#out of weekday, create a weekend dummy
+activity$weekend <- activity$weekday %in% c("Saturday", "Sunday")
+```
+
+###What is mean total number of steps taken per day?
+
+1. Calculate the total number of steps taken per day
+
+```{r}
+activityByDateMean <- aggregate(steps~date,activity, sum)
+```
+
+24. Make a histogram of the total number of steps taken each day
+
+```{r}
+library(ggplot2)
+ggplot(activityByDateMean, aes(steps)) + geom_histogram(bins = 45, alpha = 0.6, fill = "blue") + geom_density()
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+activityByDateSum <- aggregate(steps ~ interval, data=activity, sum)
+
+summary(activityByDateSum$steps)
+```
+
+###What is the average daily activity pattern
+
+1. Make a time series plot (i.e. 𝚝𝚢𝚙𝚎 = "𝚕") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r}
+activityByIntervalSum <- aggregate(steps~interval,activity, mean)
+
+ggplot(activityByIntervalSum, aes(x = interval, y = steps)) + geom_line(alpha = 0.3) + geom_smooth() +ggtitle(label = "Average steps taken during the day") + geom_vline(xintercept = activity[which.max(activityByIntervalSum$steps),]$interval, col = "red", alpha = 0.7)
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+activity[which.max(activity$steps),]$interval
+```
+
+
+```{r}
+
+activityByWeekendSum <- aggregate(steps ~ interval + weekend, data=activity, sum)
+
+ggplot(activityByWeekendSum,aes(x = interval, y = steps)) + geom_smooth(aes(col = weekend)) + ggtitle(label="steps during the day: Weekend vs. workdays")
+```
+
+###Imputing missing values
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with 𝙽𝙰s)
+
+```{r}
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+apply(activity,2,pMiss)
+
+```
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+```{r}
+library(mice)
+
+
+temp <- mice(data = activity[,c(1,3)], m = 5, method = "pmm", maxit = 10, seed = 500)
+completedData <- complete(temp,1)
+
+activity$StepsImputed <- completedData$steps
+activity$Imputed <- is.na(activity$steps)
+```
+
+```{r Visual display of Iputed values}
+ggplot(activity, aes(x = interval, y =StepsImputed, col = Imputed)) +
+    geom_point(alpha = 0.5)
+```
+
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+
+```
+
+
+4.1 Make a histogram of the total number of steps taken each day
+```{r}
+activityByDateSum <- aggregate(StepsImputed~date, activity, sum)
+ggplot(activityByDateSum, aes(StepsImputed)) + geom_histogram(bins = 45, alpha = 0.6, fill = "blue") + geom_density()
+```
+
+4.2 Calculate and report the mean and median total number of steps taken per day. 
+
+```{r}
+activityByDateSum2 <- aggregate(StepsImputed ~ interval, data=activity, sum)
+summary(activityByDateSum2$StepsImputed)
+```
+
+
+4.3 Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+Yes. Adding the new values has increased both mean and the median.
