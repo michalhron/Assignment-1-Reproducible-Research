@@ -43,6 +43,8 @@ activityByDateMean <- aggregate(steps~date,activity, sum)
 ```{r}
 library(ggplot2)
 ggplot(activityByDateMean, aes(steps)) + geom_histogram(bins = 45, alpha = 0.6, fill = "blue") + geom_density()
+
+ggsave(filename="Histogram.png")
 ```
 
 3. Calculate and report the mean and median of the total number of steps taken per day
@@ -60,6 +62,8 @@ summary(activityByDateSum$steps)
 activityByIntervalSum <- aggregate(steps~interval,activity, mean)
 
 ggplot(activityByIntervalSum, aes(x = interval, y = steps)) + geom_line(alpha = 0.3) + geom_smooth() +ggtitle(label = "Average steps taken during the day") + geom_vline(xintercept = activity[which.max(activityByIntervalSum$steps),]$interval, col = "red", alpha = 0.7)
+
+ggsave(filename=" steps_taken_during_the_day.png")
 ```
 
 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
@@ -74,6 +78,8 @@ activity[which.max(activity$steps),]$interval
 activityByWeekendSum <- aggregate(steps ~ interval + weekend, data=activity, sum)
 
 ggplot(activityByWeekendSum,aes(x = interval, y = steps)) + geom_smooth(aes(col = weekend)) + ggtitle(label="steps during the day: Weekend vs. workdays")
+
+ggsave(filename="Weekend_OR_NOT.png")
 ```
 
 ###Imputing missing values
@@ -114,6 +120,8 @@ ggplot(activity, aes(x = interval, y =StepsImputed, col = Imputed)) +
 ```{r}
 activityByDateSum <- aggregate(StepsImputed~date, activity, sum)
 ggplot(activityByDateSum, aes(StepsImputed)) + geom_histogram(bins = 45, alpha = 0.6, fill = "blue") + geom_density()
+
+ggsave(filename="second_histogram.png")
 ```
 
 4.2 Calculate and report the mean and median total number of steps taken per day. 
